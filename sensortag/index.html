@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title> Tag Sensor BLE Tester</title>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+
+<!-- Origin Trial Token, feature = Web Bluetooth, origin = https://concord.org, expires = 2017-01-20 -->
+<meta http-equiv="origin-trial" data-feature="Web Bluetooth" data-expires="2017-01-20" content="AjM29hz4NLMk5k0C9EE68VGLQkcW8LsoVIdcAtSkDe/us2x9fke/yQFbbcG/8esb3wq/mov6pewhqtCtQ5ZkHgAAAABreyJvcmlnaW4iOiAiaHR0cHM6Ly9jb25jb3JkLm9yZzo0NDMiLCAiaXNTdWJkb21haW4iOiB0cnVlLCAiZmVhdHVyZSI6ICJXZWJCbHVldG9vdGgiLCAiZXhwaXJ5IjogMTQ4NDk0ODU5NH0=">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+  <script src="./js/tag_sensor.js" defer></script>
+  <link rel="stylesheet" href="./css/tag_sensor.css">
+</head>
+
+<body class="flex vertical">
+
+  <div id="display" class="panel flex vertical">
+    <div id="ambientTemp" class="readout">
+      <span class="label">Ambient Temp:</span>
+      <span class="value">0</span>
+    </div>
+    <div id="objectTemp"  class="readout">
+      <span class="label">Object Temp:</span>
+      <span class="value">0</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    Click to open connect to bluetooth device:
+    <div>
+      <div class="button" id='connect'>connect to tag-sensor</div>
+      <div class="button" id='disconnect'>Disconnect</div>
+    </div>
+  </div>
+
+  <div id='documentation' class="panel">
+    You must be using Chrome browser on Linux or OSX, and enable the
+    Web Bluetooth API in the chrome flags:
+    <code>
+      <a href="chrome://flags/">chrome://flags/</a>
+    </code>
+  </div>
+
+</body>
+</html>
