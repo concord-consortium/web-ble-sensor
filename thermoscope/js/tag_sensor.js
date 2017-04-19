@@ -78,7 +78,7 @@
 
   const connect = function() {
     let request = navigator.bluetooth.requestDevice({
-      filters: [{ name: "Thermoscope" }],
+      filters: [{ namePrefix:  "Thermoscope"}],
       optionalServices: [tempAServiceAddr, tempBServiceAddr]
     })
     let characteristicA, characteristicB;
