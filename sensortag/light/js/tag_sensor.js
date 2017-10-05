@@ -1,7 +1,10 @@
 (function(){
+  var readIntervalID;
+
   const ctx = $('#canvas')[0].getContext('2d');
-  const showDisconnect = function(server) {
+  const deviceConnected = function(server) {
       const disconnect = function() {
+        clearInterval(readIntervalID);
         server.disconnect();
         $("#disconnect").hide();
         $("#connect").show();
@@ -9,30 +12,6 @@
       $("#disconnect").click(disconnect);
       $("#connect").hide();
       $("#disconnect").show();
-  };
-
-  const tagIdentifier    = 0xaa80;
-
-  const lightServiceAddr  = 'f000aa70-0451-4000-b000-000000000000';
-  const lightValueAddr    = 'f000aa71-0451-4000-b000-000000000000';
-  const lightEnableAddr   = 'f000aa72-0451-4000-b000-000000000000';
-
-  var   service;
-
-  const enableLight = function(service) {
-    const on      = new Uint8Array([0x01]);
-    const promise = new Promise( function(resolve,reject) {
-      const lightEnableC = service.getCharacteristic(lightEnableAddr);
-      lightEnableC.then(function(characteristic){
-        characteristic.writeValue(on)
-        .then(function() {
-          console.log("light reading enabled...");
-          resolve(service);
-        })
-        .catch(function(err) { reject(err); });
-      });
-    });
-    return promise;
   };
 
   const drawGraph = function(value) {
@@ -50,51 +29,50 @@
     ctx.fill()
   }
 
-
-  const readLight = function(byteArray) {
-    var lightLSB = byteArray.getUint8(0);
-    var lightMSB = byteArray.getUint8(1);
-
-    var light  = lightMSB << 8 | lightLSB
+  const displayLight = function(light) {
     $("#light > .value").text(light);
     drawGraph(light);
-  }
+  };
 
-  const connect = function() {
-    // Step 1: ask bluetooth service for a device
-    // this will trigger a dialog in the browser asking the user to select a device
-    // that matches these criteria
-    navigator.bluetooth.requestDevice({
+
+  const tagIdentifier     = 0xaa80;
+  const lightServiceAddr  = 'f000aa70-0451-4000-b000-000000000000';
+  const lightValueAddr    = 'f000aa71-0451-4000-b000-000000000000';
+  const lightEnableAddr   = 'f000aa72-0451-4000-b000-000000000000';
+
+  const connect = async function() {
+    // Step 1: ask for a device, this will trigger a dialog in the
+    // browser asking the user to select a device that matches these criteria
+    const device = await navigator.bluetooth.requestDevice({
       filters: [{ services: [tagIdentifier] }],
       optionalServices: [lightServiceAddr]
-    })
-    // Step 2: Connect to it
-    .then(function(device) {
-      return device.gatt.connect();
-    })
-    // Step 3: Get the Service
-    .then(function(server) {
-      showDisconnect(server);
-      window.server = server;
-      return server.getPrimaryService(lightServiceAddr);;
-    })
-    .then(function(service) {
-      return enableLight(service)
-    })
-    .then(function(service){
-      return service.getCharacteristic(lightValueAddr);
-    })
-    .then(function(characteristic){
-      const takeReading = function() {
-        var vc = characteristic.readValue();
-        vc.then(readLight);
-      };
-      setInterval(takeReading,600);
-    })
-
-    .catch(function(error) {
-     console.error('Connection failed!', error);
     });
+
+    // Step 2: Connect to it
+    const server = await device.gatt.connect();
+    deviceConnected(server);  // update UI
+
+    // Step 3: Get the Service
+    const service = await server.getPrimaryService(lightServiceAddr);
+
+    // Step 4: Enable Sensor
+    //  this is specific to the SensorTag
+    const enableChar = await service.getCharacteristic(lightEnableAddr);
+    await enableChar.writeValue(new Uint8Array([0x01]));
+
+    // Step 5: Get light characteristic
+    const valueChar = await service.getCharacteristic(lightValueAddr);
+
+    // Step 6: Loop every 600ms
+    readIntervalID = setInterval(async () => {
+
+      // Step 7: Read bytes from characterisc
+      const byteArray = await valueChar.readValue();
+
+      // Step 8: Convert bytes to a number and display it
+      displayLight(byteArray.getUint16(0, true));
+    },600);
   };
+
   $('#connect').click(connect);
 })();
