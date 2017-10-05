@@ -34,42 +34,32 @@
     drawGraph(light);
   };
 
+  tagIdentifier     = 0xaa80;
+  serviceAddr  = 'f000aa70-0451-4000-b000-000000000000';
+  valueAddr    = 'f000aa71-0451-4000-b000-000000000000';
+  enableAddr   = 'f000aa72-0451-4000-b000-000000000000';
 
-  const tagIdentifier     = 0xaa80;
-  const lightServiceAddr  = 'f000aa70-0451-4000-b000-000000000000';
-  const lightValueAddr    = 'f000aa71-0451-4000-b000-000000000000';
-  const lightEnableAddr   = 'f000aa72-0451-4000-b000-000000000000';
-
-  const connect = async function() {
-    // Step 1: ask for a device, this will trigger a dialog in the
-    // browser asking the user to select a device that matches these criteria
-    const device = await navigator.bluetooth.requestDevice({
-      filters: [{ services: [tagIdentifier] }],
-      optionalServices: [lightServiceAddr]
-    });
-
-    // Step 2: Connect to it
-    const server = await device.gatt.connect();
-    deviceConnected(server);  // update UI
-
-    // Step 3: Get the Service
-    const service = await server.getPrimaryService(lightServiceAddr);
-
-    // Step 4: Enable Sensor
-    //  this is specific to the SensorTag
-    const enableChar = await service.getCharacteristic(lightEnableAddr);
-    await enableChar.writeValue(new Uint8Array([0x01]));
-
-    // Step 5: Get light characteristic
-    const valueChar = await service.getCharacteristic(lightValueAddr);
-
-    // Step 6: Loop every 600ms
+  connect = async function() {
+    device =           // Step 1: ask for a device
+      await navigator.bluetooth.requestDevice({
+        filters: [{ services: [tagIdentifier] }],
+        optionalServices: [serviceAddr]
+      });
+    server =           // Step 2: Connect to device
+      await device.gatt.connect();
+      deviceConnected(server);
+    service =          // Step 3: Get the Service
+      await server.getPrimaryService(serviceAddr);
+    enableChar =       // Step 4: Enable Light Sensor
+      await service.getCharacteristic(enableAddr);
+      await enableChar.writeValue(new Uint8Array([0x01]));
+    valueChar =        // Step 5: Get light characteristic
+      await service.getCharacteristic(valueAddr);
+                       // Step 6: Loop every 600ms
     readIntervalID = setInterval(async () => {
-
-      // Step 7: Read bytes from characterisc
-      const byteArray = await valueChar.readValue();
-
-      // Step 8: Convert bytes to a number and display it
+      byteArray =      // Step 7: Read bytes
+        await valueChar.readValue();
+                       // Step 8: display light
       displayLight(byteArray.getUint16(0, true));
     },600);
   };
