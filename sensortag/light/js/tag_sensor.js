@@ -12,38 +12,18 @@
   };
 
   const tagIdentifier    = 0xaa80;
-  const tempServiceAddr  = 'f000aa00-0451-4000-b000-000000000000';
-  const tempValueAddr    = 'f000aa01-0451-4000-b000-000000000000';
-  const tempEnableAddr   = 'f000aa02-0451-4000-b000-000000000000';
 
   const lightServiceAddr  = 'f000aa70-0451-4000-b000-000000000000';
   const lightValueAddr    = 'f000aa71-0451-4000-b000-000000000000';
   const lightEnableAddr   = 'f000aa72-0451-4000-b000-000000000000';
 
-
   var   service;
-
-  const enableTemp = function(service) {
-    const on      = new Uint8Array([0x01]);
-    const promise = new Promise( function(resolve,reject) {
-      const tempEnableC = service.getCharacteristic(tempEnableAddr);
-      tempEnableC.then(function(characteristic){
-        characteristic.writeValue(on)
-        .then(function() {
-          console.log("temperature reading enabled...");
-          resolve(service);
-        })
-        .catch(function(err) { reject(err); });
-      });
-    });
-    return promise;
-  };
 
   const enableLight = function(service) {
     const on      = new Uint8Array([0x01]);
     const promise = new Promise( function(resolve,reject) {
-      const tempEnableC = service.getCharacteristic(lightEnableAddr);
-      tempEnableC.then(function(characteristic){
+      const lightEnableC = service.getCharacteristic(lightEnableAddr);
+      lightEnableC.then(function(characteristic){
         characteristic.writeValue(on)
         .then(function() {
           console.log("light reading enabled...");
@@ -80,27 +60,16 @@
     drawGraph(light);
   }
 
-  const readTemps = function(byteArray) {
-    var irLSB = byteArray.getUint8(0);
-    var irMSB = byteArray.getUint8(1);
-
-    var ambientLSB = byteArray.getUint8(2);
-    var ambientMSB = byteArray.getUint8(3);
-
-    var ir  = irMSB << 8 | irLSB
-    var ambient = ambientMSB << 8 | ambientLSB
-
-    $("#ambientTemp > .value").text(ambient);
-    $("#ObjTemp > .value").text(object);
-  };
-
   const connect = function() {
-    let request = navigator.bluetooth.requestDevice({
+    // Step 1: ask bluetooth service for a device
+    // this will trigger a dialog in the browser asking the user to select a device
+    // that matches these criteria
+    navigator.bluetooth.requestDevice({
       filters: [{ services: [tagIdentifier] }],
       optionalServices: [lightServiceAddr]
     })
     // Step 2: Connect to it
-    request.then(function(device) {
+    .then(function(device) {
       return device.gatt.connect();
     })
     // Step 3: Get the Service
